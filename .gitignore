@@ -20,3 +20,5 @@ Thumbs.db
 *.jar
 *.war
 *.ear
+
+${project.build.directory}/
