@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -10,44 +11,32 @@
     </parent>
 
     <artifactId>frontend-tests</artifactId>
-    <name>Frontend Tests Module</name>
 
     <dependencies>
         <dependency>
             <groupId>com.suaempresa</groupId>
             <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-picocontainer</artifactId>
-            <version>7.14.0</version> <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit</artifactId>
-            <version>7.14.0</version> <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-picocontainer</artifactId>
         </dependency>
 
     </dependencies>
@@ -55,32 +44,28 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>net.masterthought</groupId>
-                <artifactId>maven-cucumber-reporting</artifactId>
-                <version>5.7.8</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>execution</id>
+                        <id>open-ui-report</id>
                         <phase>verify</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <projectName>Relatório de Testes (Frontend)</projectName>
-
-                            <jsonFiles>
-                                <param>${project.build.directory}/cucumber-reports/report.json</param>
-                            </jsonFiles>
-
-                            <outputDirectory>${project.build.directory}/cucumber-html-reports</outputDirectory>
-
-                            <skip>false</skip>
-                            <inputDirectory>${project.build.directory}/cucumber-reports</inputDirectory>
-                            <checkBuildResult>false</checkBuildResult>
+                            <executable>cmd</executable>
+                            <arguments>
+                                <argument>/c</argument>
+                                <argument>start</argument>
+                                <argument>${project.build.directory}/cucumber-reports/ui-report.html</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
 </project>

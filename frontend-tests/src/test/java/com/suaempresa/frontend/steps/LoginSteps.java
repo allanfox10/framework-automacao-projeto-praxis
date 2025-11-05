@@ -12,6 +12,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import com.suaempresa.core.utils.ConfigManager;
 
 import java.time.Duration;
 
@@ -37,7 +38,8 @@ public class LoginSteps {
 
     @Dado("que eu acesse a página de login do SauceDemo")
     public void queEuAcesseAPaginaDeLoginDoSauceDemo() {
-        driver.get("https://www.saucedemo.com/");
+        String url = ConfigManager.getInstance().getBaseUrl();
+        driver.get(url); // <-- LINHA NOVA
     }
 
     @Quando("eu preencher o campo de usuário com {string}")

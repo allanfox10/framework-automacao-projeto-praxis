@@ -30,8 +30,15 @@ public class DriverManager {
             // No futuro, o tipo de browser pode vir de um arquivo de configuração (.properties)
             String browser = "chrome"; // "chrome" ou "firefox"
 
+            // *** MUDANÇA PRINCIPAL ***
+            // Lemos uma "Propriedade de Sistema" chamada EXECUTION_MODE.
+            // Se ela não for definida, o padrão será "local" (rodar na sua máquina).
+            // No Jenkins, vamos definir essa propriedade como "headless".
+            String executionMode = System.getProperty("EXECUTION_MODE", "local");
+
             switch (browser) {
                 case "firefox":
+                    // TODO: Adicionar lógica headless para Firefox se necessário no futuro
                     WebDriverManager.firefoxdriver().setup();
                     driver = new FirefoxDriver();
                     break;
@@ -40,9 +47,22 @@ public class DriverManager {
                 case "chrome":
                 default:
                     WebDriverManager.chromedriver().setup();
-                    // ChromeOptions são úteis para configurações avançadas (rodar em modo anônimo, headless, etc.)
                     ChromeOptions options = new ChromeOptions();
-                    options.addArguments("--start-maximized");
+
+                    // Verifica qual modo de execução usar
+                    if (executionMode.equals("headless")) {
+                        // --- MODO HEADLESS (Para rodar no Jenkins/Docker) ---
+                        System.out.println("Executando em modo HEADLESS");
+                        options.addArguments("--headless=new"); // O novo modo headless recomendado
+                        options.addArguments("--no-sandbox"); // Necessário para rodar como root no Docker
+                        options.addArguments("--disable-dev-shm-usage"); // Aumenta estabilidade no Docker
+                        options.addArguments("--window-size=1920,1080"); // Define tamanho da "tela virtual"
+                    } else {
+                        // --- MODO LOCAL (Para rodar na sua máquina) ---
+                        System.out.println("Executando em modo LOCAL");
+                        options.addArguments("--start-maximized");
+                    }
+
                     driver = new ChromeDriver(options);
                     break;
             }
