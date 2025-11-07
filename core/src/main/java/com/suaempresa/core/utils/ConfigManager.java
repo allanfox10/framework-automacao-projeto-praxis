@@ -1,8 +1,7 @@
-// Caminho: core/src/main/java/com/suaempresa/core/utils/ConfigManager.java
 package com.suaempresa.core.utils;
 
 import java.io.IOException;
-import java.io.InputStream; // Importação corrigida
+import java.io.InputStream;
 import java.util.Properties;
 
 public class ConfigManager {
@@ -22,7 +21,6 @@ public class ConfigManager {
         String configFilePath = "configs/" + environment + ".properties";
         System.out.println("Carregando configurações do ambiente: " + configFilePath);
 
-        // --- CORREÇÃO (FileInputStream -> getResourceAsStream) ---
         try (InputStream is = ConfigManager.class.getClassLoader().getResourceAsStream(configFilePath)) {
             if (is == null) {
                 throw new IOException("Arquivo de configuração não encontrado no classpath: " + configFilePath);
@@ -33,7 +31,6 @@ public class ConfigManager {
             e.printStackTrace();
             throw new RuntimeException("Não foi possível carregar o arquivo de configuração: " + configFilePath, e);
         }
-        // --- FIM DA CORREÇÃO ---
     }
 
     public static synchronized ConfigManager getInstance() {
@@ -52,9 +49,6 @@ public class ConfigManager {
     }
 
     public String getBaseUrl() {
-        // --- CORREÇÃO (app.url -> base.url) ---
         return getProperty("base.url");
     }
-
-    // ... (outros getters como getUsername, getPassword se precisar) ...
 }

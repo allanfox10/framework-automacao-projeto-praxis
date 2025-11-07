@@ -1,5 +1,6 @@
 package com.suaempresa.frontend.steps;
 
+import com.suaempresa.core.utils.ConfigManager;
 import com.suaempresa.frontend.pages.LoginAutPage;
 import com.suaempresa.frontend.pages.LoginPage;
 import io.cucumber.java.pt.Dado;
@@ -12,7 +13,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import com.suaempresa.core.utils.ConfigManager;
 
 import java.time.Duration;
 
@@ -21,25 +21,19 @@ public class LoginSteps {
     private WebDriver driver;
     private LoginPage loginPage;
     private LoginAutPage loginAutPage;
-
-    // =============================================
-    // CORREÇÃO DO WARNING AQUI
-    // =============================================
     private Wait<WebDriver> wait;
 
     public LoginSteps(Hooks hooks) {
         this.driver = hooks.getDriver();
         this.loginPage = new LoginPage(driver);
         this.loginAutPage = new LoginAutPage(driver);
-
-        // A 'wait' da classe agora é corretamente instanciada
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(5));
     }
 
     @Dado("que eu acesse a página de login do SauceDemo")
     public void queEuAcesseAPaginaDeLoginDoSauceDemo() {
         String url = ConfigManager.getInstance().getBaseUrl();
-        driver.get(url); // <-- LINHA NOVA
+        driver.get(url);
     }
 
     @Quando("eu preencher o campo de usuário com {string}")
@@ -60,10 +54,6 @@ public class LoginSteps {
     @Então("eu devo ser redirecionado para a página de inventário")
     public void euDevoSerRedirecionadoParaAPáginaDeInventário() {
         String urlEsperada = "https://www.saucedemo.com/inventory.html";
-
-        // =============================================
-        // (MELHORIA) Usando a 'wait' da classe, em vez de criar uma nova
-        // =============================================
         this.wait.until(ExpectedConditions.urlToBe(urlEsperada));
 
         String urlAtual = driver.getCurrentUrl();
@@ -85,9 +75,7 @@ public class LoginSteps {
 
     @E("eu devo visualizar a mensagem de erro {string}")
     public void euDevoVisualizarAMensagemDeErro(String mensagemEsperada) {
-        // Usando a 'wait' da classe (que agora está correta)
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("[data-test='error']")));
-
         String mensagemAtual = loginPage.getMensagemErro();
         Assert.assertEquals("A mensagem de erro não é a esperada.", mensagemEsperada, mensagemAtual);
     }

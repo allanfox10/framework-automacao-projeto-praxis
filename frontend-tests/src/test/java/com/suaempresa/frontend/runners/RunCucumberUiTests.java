@@ -8,16 +8,12 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
         features = "src/test/resources/features/web",
         glue = "com.suaempresa.frontend.steps",
-
-        // --- INÍCIO DA ATUALIZAÇÃO ---
-        // Adicionado para espelhar a configuração do seu Runner de API
         plugin = {
                 "pretty",
                 "html:target/cucumber-reports/ui-report.html",
-                "json:target/cucumber-reports/ui-report.json" // Essencial para o Cluecumber
+                "json:target/cucumber-reports/ui-report.json"
         },
         monochrome = true
-        // --- FIM DA ATUALIZAÇÃO ---
 )
 public class RunCucumberUiTests {
 }

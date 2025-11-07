@@ -12,11 +12,9 @@ import org.junit.runner.RunWith;
         plugin = {
                 "pretty",
                 "html:target/cucumber-reports/api-report.html",
-                "json:target/cucumber-reports/api-report.json"  // Esta linha já estava correta
+                "json:target/cucumber-reports/api-report.json"
         },
         monochrome = true
 )
 public class RunCucumberApiTests {
-    // A classe fica vazia.
-    // As anotações acima fazem todo o trabalho.
 }

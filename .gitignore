@@ -1,3 +1,6 @@
+# Ignora pasta de build com nome literal
+${project.build.directory}/
+
 # Arquivos de log
 *.log
 npm-debug.log*
@@ -5,7 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Arquivos compilados do Maven
-target/
+# Ignora a pasta 'target' em qualquer subdiretório (ex: core/target/, frontend-tests/target/)
+*/target/
 
 # Arquivos de IDE (IntelliJ)
 .idea/
@@ -20,5 +24,3 @@ Thumbs.db
 *.jar
 *.war
 *.ear
-
-${project.build.directory}/

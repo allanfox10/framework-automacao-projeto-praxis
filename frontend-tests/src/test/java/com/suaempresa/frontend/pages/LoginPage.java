@@ -1,4 +1,4 @@
-package com.suaempresa.frontend.pages; // <-- MUDOU AQUI
+package com.suaempresa.frontend.pages;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;

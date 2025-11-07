@@ -1,6 +1,7 @@
 # language: pt
 Funcionalidade: Login na plataforma SauceDemo
 
+  @LoginSucesso
   Cenário: Login com credenciais válidas
     Dado que eu acesse a página de login do SauceDemo
     Quando eu preencher o campo de usuário com "standard_user"
@@ -9,6 +10,7 @@ Funcionalidade: Login na plataforma SauceDemo
     Então eu devo ser redirecionado para a página de inventário
     E eu devo visualizar o título "Products"
 
+  @LoginBloqueado
   Cenário: Login com usuário bloqueado
     Dado que eu acesse a página de login do SauceDemo
     Quando eu preencher o campo de usuário com "locked_out_user"
