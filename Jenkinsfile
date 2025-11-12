@@ -1,51 +1,50 @@
 pipeline {
-    // Usamos o 'agent' que configuramos (com Java, Maven e Chrome)
+    // Define que o pipeline rodará dentro do container Docker configurado
     agent {
         docker {
             image 'allan-jenkins-agent:latest'
-            args '-u root' // Necessário se o WebDriverManager precisar rodar como root
+            args '-u root' // Permissão de root para instalação de pacotes/drivers se necessário
         }
     }
 
     stages {
-        // Estágio 1: Compilação
-        // Instala o core localmente para garantir que os outros módulos o encontrem
+        // Estágio 1: Build
+        // Compila todo o projeto e instala dependências do 'core'
         stage('Build') {
             steps {
-                echo 'Iniciando Build (compile)...'
+                echo '🔨 Iniciando Build (Clean & Install)...'
                 sh 'mvn clean install -DskipTests'
             }
         }
 
         // Estágio 2: Testes em Paralelo
-        // Roda os testes de UI, API e Mobile ao mesmo tempo.
+        // Executa Backend, Frontend e Mobile simultaneamente para ganhar tempo
         stage('Test') {
-            // failFast: false (Padrão) garante que todos os ramos tentem rodar
             parallel {
-                // Ramo 1: Testes de API
+                // Ramo 1: Backend (API)
                 stage('API Tests') {
                     steps {
-                        echo 'Iniciando testes de API...'
-                        // AJUSTE: Removemos o "|| echo..." e adicionamos -Dmaven.test.failure.ignore=false
-                        // Isso garante que o build falhe se os testes de API quebrarem.
+                        echo '🚀 Iniciando testes de API...'
+                        // -pl: aponta para o módulo
+                        // -Dmaven.test.failure.ignore=false: força o build a falhar se o teste quebrar
                         sh 'mvn test -pl backend-tests -Dcucumber.filter.tags="@api" -Dmaven.test.failure.ignore=false'
                     }
                 }
 
-                // Ramo 2: Testes de UI (Frontend)
+                // Ramo 2: Frontend (Web)
                 stage('UI Tests') {
                     steps {
-                        echo 'Iniciando testes de UI (Headless)...'
-                         // AJUSTE: Removemos o "|| echo..." e adicionamos -Dmaven.test.failure.ignore=false
+                        echo '🌐 Iniciando testes de UI (Headless)...'
+                        // DEXECUTION_MODE=headless: define execução sem interface gráfica
                         sh 'mvn test -pl frontend-tests -DEXECUTION_MODE=headless -Dmaven.test.failure.ignore=false'
                     }
                 }
 
-                // Ramo 3: Testes Mobile (AJUSTADO)
+                // Ramo 3: Mobile (Android)
                 stage('Mobile Tests') {
                     steps {
-                        echo 'Iniciando testes Mobile...'
-                        // AJUSTE: Passando o IP do Host (192.168.18.63) e forçando a falha
+                        echo '📱 Iniciando testes Mobile...'
+                        // DAPPIUM_SERVER_URL: Aponta para o IP real da máquina Windows onde o Appium roda
                         sh 'mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL="http://192.168.18.63:4723/" -Dmaven.test.failure.ignore=false'
                     }
                 }
@@ -53,13 +52,13 @@ pipeline {
         }
     } // Fim dos stages
 
-    // Estágio 3: Pós-Execução (Publicar Relatórios)
+    // Estágio 3: Pós-Execução
+    // Executado sempre, independentemente de sucesso ou falha
     post {
-        // 'always' garante que os relatórios sejam publicados mesmo se os testes falharem (BUILD VERMELHO)
         always {
-            echo 'Publicando relatórios HTML...'
+            echo '📊 Gerando e Publicando Relatórios...'
 
-            // Publica o Relatório de API
+            // 1. Relatório HTML do Backend
             publishHTML(target: [
                 reportDir: 'backend-tests/target/cucumber-reports',
                 reportFiles: 'api-report.html',
@@ -69,7 +68,7 @@ pipeline {
                 allowMissing: true
             ])
 
-            // Publica o Relatório de UI
+            // 2. Relatório HTML do Frontend
             publishHTML(target: [
                 reportDir: 'frontend-tests/target/cucumber-reports',
                 reportFiles: 'ui-report.html',
@@ -79,7 +78,7 @@ pipeline {
                 allowMissing: true
             ])
 
-            // Publica o Relatório Mobile
+            // 3. Relatório HTML do Mobile
             publishHTML(target: [
                 reportDir: 'mobile-tests/target/cucumber-reports',
                 reportFiles: 'mobile-report.html',
@@ -89,7 +88,8 @@ pipeline {
                 allowMissing: true
             ])
 
-            // Adiciona o gráfico de tendências do Cucumber
+            // 4. Relatório Consolidado (Cucumber Trends)
+            // Gera gráficos de tendência baseados nos arquivos .json gerados
             cucumber buildStatus: 'null',
                      fileIncludePattern: '**/cucumber-reports/*.json',
                      sortingMethod: 'ALPHABETICAL'
