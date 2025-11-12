@@ -13,6 +13,7 @@
         <module>core</module>
         <module>frontend-tests</module>
         <module>backend-tests</module>
+        <module>mobile-tests</module>
     </modules>
 
     <properties>

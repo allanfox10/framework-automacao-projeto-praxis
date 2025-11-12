@@ -9,25 +9,23 @@ pipeline {
 
     stages {
         // Estágio 1: Compilação
-        // Apenas compila o projeto, sem rodar testes ainda.
+        // Apenas compila o projeto (incluindo o core), sem rodar testes ainda.
         stage('Build') {
             steps {
                 echo 'Iniciando Build (compile)...'
-                // '-DskipTests' pula os testes nesta fase
-                sh 'mvn clean compile -DskipTests'
+                // Instala o core localmente para garantir que o mobile consiga lê-lo se tiver dependência
+                sh 'mvn clean install -DskipTests'
             }
         }
 
         // Estágio 2: Testes em Paralelo
-        // Roda os testes de UI e API ao mesmo tempo.
+        // Roda os testes de UI, API e Mobile ao mesmo tempo.
         stage('Test') {
             parallel {
                 // Ramo 1: Testes de API
                 stage('API Tests') {
                     steps {
                         echo 'Iniciando testes de API...'
-                        // Usamos 'test' (e não 'install') e -pl para focar no módulo
-                        // 'try...catch...finally' garante que o relatório seja gerado
                         sh '''
                             mvn test -pl backend-tests -Dcucumber.filter.tags="@api" || \
                             echo 'Testes de API falharam, mas continuaremos.'
@@ -39,10 +37,21 @@ pipeline {
                 stage('UI Tests') {
                     steps {
                         echo 'Iniciando testes de UI (Headless)...'
-                        // Passamos EXECUTION_MODE=headless para o DriverManager
                         sh '''
                             mvn test -pl frontend-tests -DEXECUTION_MODE=headless || \
                             echo 'Testes de UI falharam, mas continuaremos.'
+                        '''
+                    }
+                }
+
+                // Ramo 3: Testes Mobile (Novo)
+                stage('Mobile Tests') {
+                    steps {
+                        echo 'Iniciando testes Mobile...'
+                        // Nota: O emulador ou Appium Server deve estar acessível pela rede deste container
+                        sh '''
+                            mvn test -pl mobile-tests -Dtest=RunCucumberMobTests || \
+                            echo 'Testes Mobile falharam, mas continuaremos.'
                         '''
                     }
                 }
@@ -51,31 +60,38 @@ pipeline {
     } // Fim dos stages
 
     // Estágio 3: Pós-Execução (Publicar Relatórios)
-    // Este bloco 'post' roda DEPOIS de todos os stages.
     post {
-        // 'always' garante que os relatórios sejam publicados
-        // mesmo se os testes falharem (queremos ver o motivo da falha).
         always {
             echo 'Publicando relatórios HTML...'
 
             // Publica o Relatório de API
             publishHTML(target: [
-                reportDir: 'backend-tests/target/cucumber-reports', // Onde o relatório está
-                reportFiles: 'api-report.html',     // O nome do arquivo principal
-                reportName: 'Relatório de Testes API', // Nome do link no Jenkins
+                reportDir: 'backend-tests/target/cucumber-reports',
+                reportFiles: 'api-report.html',
+                reportName: 'Relatório de Testes API',
                 keepAll: true,
                 alwaysLinkToLastBuild: true,
-                allowMissing: true // Não falha o build se o arquivo não existir
+                allowMissing: true
             ])
 
             // Publica o Relatório de UI
             publishHTML(target: [
-                reportDir: 'frontend-tests/target/cucumber-reports', // Onde o relatório está
-                reportFiles: 'ui-report.html',    // O nome do arquivo principal
-                reportName: 'Relatório de Testes UI', // Nome do link no Jenkins
+                reportDir: 'frontend-tests/target/cucumber-reports',
+                reportFiles: 'ui-report.html',
+                reportName: 'Relatório de Testes UI',
                 keepAll: true,
                 alwaysLinkToLastBuild: true,
-                allowMissing: true // Não falha o build se o arquivo não existir
+                allowMissing: true
+            ])
+
+            // Publica o Relatório Mobile (Novo)
+            publishHTML(target: [
+                reportDir: 'mobile-tests/target/cucumber-reports',
+                reportFiles: 'mobile-report.html',
+                reportName: 'Relatório de Testes Mobile',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: true
             ])
         }
     }

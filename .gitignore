@@ -1,26 +1,41 @@
-# Ignora pasta de build com nome literal
-${project.build.directory}/
+# --- Maven ---
+# Ignora a pasta target na raiz e em todos os sub-módulos
+target/
+**/target/
 
-# Arquivos de log
+# Ignora arquivos de relatórios temporários e builds
+test-output/
+build/
+dist/
+
+# --- Logs ---
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Arquivos compilados do Maven
-# Ignora a pasta 'target' em qualquer subdiretório (ex: core/target/, frontend-tests/target/)
-*/target/
-
-# Arquivos de IDE (IntelliJ)
+# --- IDE (IntelliJ / Eclipse / VSCode) ---
 .idea/
 *.iml
 *.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
 
-# Arquivos de sistema operacional
+# --- Sistema Operacional ---
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Arquivos de dependências (ex: jars baixados)
+# --- Dependências e Binários ---
 *.jar
 *.war
 *.ear
+*.class
+
+# Exceção: Não ignorar o Maven Wrapper (se existir)
+!mvnw
+!mvnw.cmd
+!.mvn/wrapper/maven-wrapper.jar
