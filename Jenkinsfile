@@ -9,11 +9,10 @@ pipeline {
 
     stages {
         // Estágio 1: Compilação
-        // Apenas compila o projeto (incluindo o core), sem rodar testes ainda.
+        // Instala o core localmente para garantir que os outros módulos o encontrem
         stage('Build') {
             steps {
                 echo 'Iniciando Build (compile)...'
-                // Instala o core localmente para garantir que o mobile consiga lê-lo se tiver dependência
                 sh 'mvn clean install -DskipTests'
             }
         }
@@ -21,15 +20,15 @@ pipeline {
         // Estágio 2: Testes em Paralelo
         // Roda os testes de UI, API e Mobile ao mesmo tempo.
         stage('Test') {
+            // failFast: false (Padrão) garante que todos os ramos tentem rodar
             parallel {
                 // Ramo 1: Testes de API
                 stage('API Tests') {
                     steps {
                         echo 'Iniciando testes de API...'
-                        sh '''
-                            mvn test -pl backend-tests -Dcucumber.filter.tags="@api" || \
-                            echo 'Testes de API falharam, mas continuaremos.'
-                        '''
+                        // AJUSTE: Removemos o "|| echo..." e adicionamos -Dmaven.test.failure.ignore=false
+                        // Isso garante que o build falhe se os testes de API quebrarem.
+                        sh 'mvn test -pl backend-tests -Dcucumber.filter.tags="@api" -Dmaven.test.failure.ignore=false'
                     }
                 }
 
@@ -37,22 +36,17 @@ pipeline {
                 stage('UI Tests') {
                     steps {
                         echo 'Iniciando testes de UI (Headless)...'
-                        sh '''
-                            mvn test -pl frontend-tests -DEXECUTION_MODE=headless || \
-                            echo 'Testes de UI falharam, mas continuaremos.'
-                        '''
+                         // AJUSTE: Removemos o "|| echo..." e adicionamos -Dmaven.test.failure.ignore=false
+                        sh 'mvn test -pl frontend-tests -DEXECUTION_MODE=headless -Dmaven.test.failure.ignore=false'
                     }
                 }
 
-                // Ramo 3: Testes Mobile (Novo)
+                // Ramo 3: Testes Mobile (AJUSTADO)
                 stage('Mobile Tests') {
                     steps {
                         echo 'Iniciando testes Mobile...'
-                        // Nota: O emulador ou Appium Server deve estar acessível pela rede deste container
-                        sh '''
-                            mvn test -pl mobile-tests -Dtest=RunCucumberMobTests || \
-                            echo 'Testes Mobile falharam, mas continuaremos.'
-                        '''
+                        // AJUSTE: Passando o IP do Host (192.168.18.63) e forçando a falha
+                        sh 'mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL="http://192.168.18.63:4723/" -Dmaven.test.failure.ignore=false'
                     }
                 }
             }
@@ -61,6 +55,7 @@ pipeline {
 
     // Estágio 3: Pós-Execução (Publicar Relatórios)
     post {
+        // 'always' garante que os relatórios sejam publicados mesmo se os testes falharem (BUILD VERMELHO)
         always {
             echo 'Publicando relatórios HTML...'
 
@@ -84,7 +79,7 @@ pipeline {
                 allowMissing: true
             ])
 
-            // Publica o Relatório Mobile (Novo)
+            // Publica o Relatório Mobile
             publishHTML(target: [
                 reportDir: 'mobile-tests/target/cucumber-reports',
                 reportFiles: 'mobile-report.html',
@@ -93,6 +88,11 @@ pipeline {
                 alwaysLinkToLastBuild: true,
                 allowMissing: true
             ])
+
+            // Adiciona o gráfico de tendências do Cucumber
+            cucumber buildStatus: 'null',
+                     fileIncludePattern: '**/cucumber-reports/*.json',
+                     sortingMethod: 'ALPHABETICAL'
         }
     }
 }
