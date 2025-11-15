@@ -29,26 +29,31 @@ public class MobileDriverManager {
                 options.setAutomationName("UiAutomator2");
                 options.setDeviceName("Pixel 4 API 30");
 
-                // LÓGICA DE CAMINHO DO APK (Já estava boa, mantivemos a flexibilidade)
+                // --- AJUSTE NA LÓGICA DE CAMINHO DO APK ---
                 if (appAtual.isInstalaApk()) {
                     String userDir = System.getProperty("user.dir");
-                    // Usa File.separator para garantir compatibilidade Windows/Linux
-                    String separator = File.separator;
-                    String relativePath = separator + "src" + separator + "test" + separator + "resources" + separator + "apps" + separator + appAtual.getApkName();
+                    // Caminho relativo padrão dentro do módulo
+                    String localPath = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "apps" + File.separator + appAtual.getApkName();
 
-                    // Se estiver rodando da raiz do projeto (Maven Parent), adiciona o nome do módulo
-                    if (!userDir.endsWith("mobile-tests")) {
-                        relativePath = separator + "mobile-tests" + relativePath;
+                    // 1. Tenta montar o caminho direto (ideal para quando roda de dentro do módulo)
+                    File app = new File(userDir, localPath);
+
+                    // 2. Estratégia de Fallback (Contingência):
+                    // Se o arquivo não existe ali, provavelmente estamos rodando da raiz do projeto (Jenkins/Maven Parent)
+                    // Então tentamos adicionar o nome do módulo "mobile-tests" no caminho.
+                    if (!app.exists()) {
+                        app = new File(userDir + File.separator + "mobile-tests", localPath);
                     }
 
-                    File app = new File(userDir + relativePath);
-
-                    // Log para ajudar no debug no Jenkins se der erro de caminho
+                    // Log para ajudar no debug no Jenkins
                     System.out.println("📂 Procurando APK em: " + app.getAbsolutePath());
 
+                    // Validação Final
                     if (!app.exists()) {
-                        throw new RuntimeException("❌ APK não encontrado: " + app.getAbsolutePath());
+                        throw new RuntimeException("❌ APK não encontrado no caminho: " + app.getAbsolutePath() +
+                                "\n Verifique se o arquivo .apk foi commitado no Git e se o caminho está correto!");
                     }
+
                     options.setApp(app.getAbsolutePath());
                     options.setAppWaitActivity("*");
 
@@ -58,11 +63,9 @@ public class MobileDriverManager {
                     options.setAppActivity(appAtual.getAppActivity());
                 }
 
-                // --- AQUI ESTÁ A GRANDE MUDANÇA ---
-                // 1. Tenta pegar a URL passada pelo Maven/Jenkins (-DAPPIUM_SERVER_URL=...)
+                // --- LÓGICA DA URL DO APPIUM ---
                 String appiumUrl = System.getProperty("APPIUM_SERVER_URL");
 
-                // 2. Se não vier nada (rodando local na IDE), usa o padrão local
                 if (appiumUrl == null || appiumUrl.isEmpty()) {
                     appiumUrl = "http://127.0.0.1:4723/";
                     System.out.println("⚠️ Variável APPIUM_SERVER_URL não definida. Usando padrão local: " + appiumUrl);
