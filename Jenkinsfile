@@ -1,11 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'allan-jenkins-agent:latest'
-            // Permite que o container acesse o Appium rodando no Windows (host)
-            args '-u root --add-host=host.docker.internal:host-gateway'
-        }
-    }
+    agent any
 
     tools {
         maven 'Maven_Default'
@@ -16,13 +10,14 @@ pipeline {
             steps {
                 echo '🔧 Configurando ambiente...'
                 // Instalação do Chrome necessária para os testes de UI
+                // O '|| true' evita falha se o update der erro temporário
                 sh '''
-                    apt-get update
+                    apt-get update || true
                     apt-get install -y wget
-                    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-                    apt-get install -y --fix-broken ./google-chrome-stable_current_amd64.deb
-                    rm google-chrome-stable_current_amd64.deb
-                    google-chrome --version
+                    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb || true
+                    apt-get install -y --fix-broken ./google-chrome-stable_current_amd64.deb || true
+                    rm -f google-chrome-stable_current_amd64.deb
+                    google-chrome --version || echo "Aviso: Chrome pode nao ter instalado corretamente"
                 '''
             }
         }
@@ -30,7 +25,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo '🔨 Iniciando Build (Clean & Install)...'
-                // Roda o clean install ignorando os testes inicialmente para garantir que compila
                 sh 'mvn clean install -DskipTests'
             }
         }
@@ -47,7 +41,6 @@ pipeline {
                 stage('UI Tests') {
                     steps {
                         echo '🌐 Executando testes de UI (Headless)...'
-                        // O Chrome já foi instalado no estágio de Setup
                         sh 'mvn test -pl frontend-tests -DEXECUTION_MODE=headless'
                     }
                 }
@@ -55,7 +48,7 @@ pipeline {
                 stage('Mobile Tests') {
                     steps {
                         echo '📱 Executando testes Mobile...'
-                        // Aqui está o segredo: Aponta para o host do Docker onde o Appium está rodando
+                        // Aponta para o host do Docker onde o Appium está rodando
                         sh 'mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL="http://host.docker.internal:4723/"'
                     }
                 }
@@ -67,7 +60,6 @@ pipeline {
         always {
             echo '📊 Gerando Relatórios...'
 
-            // Publica relatório do Backend
             publishHTML(target: [
                 reportDir: 'backend-tests/target/cucumber-reports',
                 reportFiles: 'api-report.html',
@@ -75,7 +67,6 @@ pipeline {
                 keepAll: true, allowMissing: true
             ])
 
-            // Publica relatório do Frontend
             publishHTML(target: [
                 reportDir: 'frontend-tests/target/cucumber-reports',
                 reportFiles: 'ui-report.html',
@@ -83,7 +74,6 @@ pipeline {
                 keepAll: true, allowMissing: true
             ])
 
-            // Publica relatório Mobile
             publishHTML(target: [
                 reportDir: 'mobile-tests/target/cucumber-reports',
                 reportFiles: 'mobile-report.html',
@@ -91,7 +81,6 @@ pipeline {
                 keepAll: true, allowMissing: true
             ])
 
-            // Plugin do Cucumber para visão unificada
             cucumber buildStatus: 'null',
                      fileIncludePattern: '**/cucumber-reports/*.json',
                      sortingMethod: 'ALPHABETICAL'
