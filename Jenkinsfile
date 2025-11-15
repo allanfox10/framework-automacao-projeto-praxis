@@ -49,6 +49,10 @@ pipeline {
                 echo '🔨 Iniciando Build (Clean & Install)...'
                 // Pula os testes unitários aqui para ganhar tempo, já que rodaremos os testes funcionais abaixo
                 sh 'mvn clean install -DskipTests'
+
+                // --- AJUSTE CRÍTICO: Garante que o arquivo APK tem permissão de leitura global ---
+                echo '🛡️ Ajustando permissões de leitura do APK para acesso do Appium...'
+                sh 'chmod +r mobile-tests/src/test/resources/apps/Android.SauceLabs.Mobile.Sample.app.2.7.1.apk'
             }
         }
 
