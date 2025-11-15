@@ -49,7 +49,7 @@ pipeline {
                     steps {
                         echo '📱 Executando testes Mobile...'
                         // Aponta para o host do Docker onde o Appium está rodando
-                        sh 'mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL="http://host.docker.internal:4723/"'
+                        sh "mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL=http://appium:4723/"
                     }
                 }
             }
