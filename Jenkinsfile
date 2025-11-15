@@ -81,8 +81,10 @@ pipeline {
                 keepAll: true, allowMissing: true
             ])
 
+            // ALTERAÇÃO AQUI: Filtro alterado de '*.json' para '*-report.json'
+            // Isso garante que ele pegue apenas 'api-report.json', 'ui-report.json', etc.
             cucumber buildStatus: 'null',
-                     fileIncludePattern: '**/cucumber-reports/*.json',
+                     fileIncludePattern: '**/cucumber-reports/*-report.json',
                      sortingMethod: 'ALPHABETICAL'
         }
     }
