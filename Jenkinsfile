@@ -9,8 +9,7 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 echo '🔧 Configurando ambiente...'
-                // Instalação do Chrome necessária para os testes de UI
-                // O '|| true' evita falha se o update der erro temporário
+                // Instalação do Chrome para testes UI
                 sh '''
                     apt-get update || true
                     apt-get install -y wget
@@ -48,8 +47,8 @@ pipeline {
                 stage('Mobile Tests') {
                     steps {
                         echo '📱 Executando testes Mobile...'
-                        // Aponta para o host do Docker onde o Appium está rodando
-                        sh "mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL=http://appium:4723/"
+                        // CORREÇÃO: Aponta para host.docker.internal para acessar o Windows
+                        sh "mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL=http://host.docker.internal:4723/"
                     }
                 }
             }
@@ -81,8 +80,6 @@ pipeline {
                 keepAll: true, allowMissing: true
             ])
 
-            // ALTERAÇÃO AQUI: Filtro alterado de '*.json' para '*-report.json'
-            // Isso garante que ele pegue apenas 'api-report.json', 'ui-report.json', etc.
             cucumber buildStatus: 'null',
                      fileIncludePattern: '**/cucumber-reports/*-report.json',
                      sortingMethod: 'ALPHABETICAL'

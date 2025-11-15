@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: praxis-jenkins
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JAVA_OPTS=-Duser.timezone=America/Sao_Paulo
+    networks:
+      - praxis-network
+
+  appium:
+    image: appium/appium:latest
+    container_name: praxis-appium
+    privileged: true
+    ports:
+      - "4723:4723"
+    environment:
+      - RELAXED_SECURITY=true
+    # REMOVIDA A LINHA "COMMAND" DAQUI
+    networks:
+      - praxis-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  jenkins_home:
+
+networks:
+  praxis-network:
+    driver: bridge
