@@ -72,20 +72,20 @@ pipeline {
 
                 stage('Mobile Tests') {
                     steps {
-                        echo '📱 Executando testes Mobile (Cross-OS)...'
+                        // O BLOCO 'script' foi adicionado aqui para permitir a declaração da variável 'def windowsApkPath'
+                        script {
+                            echo '📱 Executando testes Mobile (Cross-OS - Windows Host Path)...'
 
-                        // 1. DEFINE O CAMINHO ABSOLUTO DO WINDOWS HOST
-                        // O caminho DEVE ser o local onde o APK está no sistema de arquivos do Windows.
-                        // Usamos barras normais (/) porque o Appium as aceita, simplificando a sintaxe.
-                        def windowsApkPath = "C:/Projetos_Automação/Praxis/mobile-tests/src/test/resources/apps/Android.SauceLabs.Mobile.Sample.app.2.7.1.apk"
+                            // 1. DEFINE O CAMINHO ABSOLUTO DO WINDOWS HOST
+                            def windowsApkPath = "C:/Projetos_Automação/Praxis/mobile-tests/src/test/resources/apps/Android.SauceLabs.Mobile.Sample.app.2.7.1.apk"
 
-                        // 2. EXECUTA O MAVEN INJETANDO O CAMINHO DO WINDOWS
-                        sh """
-                            mvn test -pl mobile-tests -Dtest=RunCucumberMobTests \
-                            -DAPPIUM_SERVER_URL=http://host.docker.internal:4723/ \
-                            -DCI_APK_PATH="${windowsApkPath}"
-                        """
-                        // O Appium Server no Windows agora receberá o caminho correto "C:/..."
+                            // 2. EXECUTA O MAVEN INJETANDO O CAMINHO DO WINDOWS
+                            sh """
+                                mvn test -pl mobile-tests -Dtest=RunCucumberMobTests \
+                                -DAPPIUM_SERVER_URL=http://host.docker.internal:4723/ \
+                                -DCI_APK_PATH="${windowsApkPath}"
+                            """
+                        }
                     }
                 }
             }
