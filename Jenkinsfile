@@ -31,8 +31,6 @@ pipeline {
             }
         }
 
-        // --- NOVO ESTÁGIO DE DEBUG ---
-        // Isso vai listar os arquivos para provar que o APK está lá antes de rodar o teste
         stage('Debug Files') {
             steps {
                 script {
@@ -74,9 +72,20 @@ pipeline {
 
                 stage('Mobile Tests') {
                     steps {
-                        echo '📱 Executando testes Mobile...'
-                        // Aponta para host.docker.internal para acessar o Appium no Windows
-                        sh "mvn test -pl mobile-tests -Dtest=RunCucumberMobTests -DAPPIUM_SERVER_URL=http://host.docker.internal:4723/"
+                        echo '📱 Executando testes Mobile (Cross-OS)...'
+
+                        // 1. DEFINE O CAMINHO ABSOLUTO DO WINDOWS HOST
+                        // O caminho DEVE ser o local onde o APK está no sistema de arquivos do Windows.
+                        // Usamos barras normais (/) porque o Appium as aceita, simplificando a sintaxe.
+                        def windowsApkPath = "C:/Projetos_Automação/Praxis/mobile-tests/src/test/resources/apps/Android.SauceLabs.Mobile.Sample.app.2.7.1.apk"
+
+                        // 2. EXECUTA O MAVEN INJETANDO O CAMINHO DO WINDOWS
+                        sh """
+                            mvn test -pl mobile-tests -Dtest=RunCucumberMobTests \
+                            -DAPPIUM_SERVER_URL=http://host.docker.internal:4723/ \
+                            -DCI_APK_PATH="${windowsApkPath}"
+                        """
+                        // O Appium Server no Windows agora receberá o caminho correto "C:/..."
                     }
                 }
             }

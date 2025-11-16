@@ -2,28 +2,37 @@ package com.suaempresa.mobile.driver;
 
 public enum AppConfig {
 
-    // --- LISTA DE APPS DO PROJETO ---
+    // Adicionei os detalhes corretos para o APK de teste do Swag Labs
+    SWAG_LABS("com.swaglabsmobileapp", "com.swaglabsmobileapp.MainActivity", "Android.SauceLabs.Mobile.Sample.app.2.7.1.apk", true),
 
-    SWAG_LABS(true, "Android.SauceLabs.Mobile.Sample.app.2.7.1.apk", null, null),
+    // Configuração para abrir o App nativo de configurações (que estava funcionando)
+    ANDROID_SETTINGS("com.android.settings", "com.android.settings.Settings", "", false);
 
-    ANDROID_SETTINGS(false, null, "com.android.settings", ".Settings"),
-;
-    // --- ESTRUTURA DO ENUM ---
-
-    private final boolean instalaApk;
-    private final String apkName;
     private final String appPackage;
     private final String appActivity;
+    private final String apkName;
+    private final boolean instalaApk;
 
-    AppConfig(boolean instalaApk, String apkName, String appPackage, String appActivity) {
-        this.instalaApk = instalaApk;
-        this.apkName = apkName;
+    AppConfig(String appPackage, String appActivity, String apkName, boolean instalaApk) {
         this.appPackage = appPackage;
         this.appActivity = appActivity;
+        this.apkName = apkName;
+        this.instalaApk = instalaApk;
     }
 
-    public boolean isInstalaApk() { return instalaApk; }
-    public String getApkName() { return apkName; }
-    public String getAppPackage() { return appPackage; }
-    public String getAppActivity() { return appActivity; }
+    public String getAppPackage() {
+        return appPackage;
+    }
+
+    public String getAppActivity() {
+        return appActivity;
+    }
+
+    public String getApkName() {
+        return apkName;
+    }
+
+    public boolean isInstalaApk() {
+        return instalaApk;
+    }
 }

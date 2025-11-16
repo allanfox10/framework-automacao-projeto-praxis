@@ -7,6 +7,7 @@ import org.openqa.selenium.WebDriver;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 
 public class MobileDriverManager {
 
@@ -29,45 +30,59 @@ public class MobileDriverManager {
                 options.setAutomationName("UiAutomator2");
                 options.setDeviceName("Pixel 4 API 30");
 
-                // --- AJUSTE NA LÓGICA DE CAMINHO DO APK ---
+                options.setNoReset(false);
+                options.setNewCommandTimeout(Duration.ofSeconds(90));
+
+                // 1. Defina AppPackage e AppActivity sempre
+                options.setAppPackage(appAtual.getAppPackage());
+                options.setAppActivity(appAtual.getAppActivity());
+
                 if (appAtual.isInstalaApk()) {
-                    String userDir = System.getProperty("user.dir");
-                    // Caminho relativo padrão dentro do módulo
-                    String localPath = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "apps" + File.separator + appAtual.getApkName();
 
-                    // 1. Tenta montar o caminho direto (ideal para quando roda de dentro do módulo)
-                    File app = new File(userDir, localPath);
+                    String apkPath;
+                    String ciApkPath = System.getProperty("CI_APK_PATH");
 
-                    // 2. Estratégia de Fallback (Contingência):
-                    // Se o arquivo não existe ali, provavelmente estamos rodando da raiz do projeto (Jenkins/Maven Parent)
-                    // Então tentamos adicionar o nome do módulo "mobile-tests" no caminho.
-                    if (!app.exists()) {
-                        app = new File(userDir + File.separator + "mobile-tests", localPath);
+                    if (ciApkPath != null && !ciApkPath.isEmpty()) {
+                        // --- CENÁRIO CRÍTICO DE CI (Jenkins Docker -> Appium Windows) ---
+                        // Usa o caminho Windows fornecido como parâmetro Maven/Jenkins
+                        apkPath = ciApkPath;
+                        System.out.println("⭐ Modo CI Ativo. Usando caminho de APK fornecido: " + apkPath);
+                    } else {
+                        // --- CENÁRIO LOCAL (Windows/Linux Padrão) ---
+                        String userDir = System.getProperty("user.dir");
+                        String localPath = "mobile-tests" + File.separator +
+                                "src" + File.separator +
+                                "test" + File.separator +
+                                "resources" + File.separator +
+                                "apps" + File.separator +
+                                appAtual.getApkName();
+
+                        File appFile = new File(userDir, localPath);
+
+                        // Lógica de fallback para quando o Maven é executado a partir do módulo
+                        if (!appFile.exists() && new File(userDir).getName().equals("mobile-tests")) {
+                            appFile = new File(userDir + File.separator + "src" + File.separator + "test" + File.separator + "resources" + File.separator + "apps" + File.separator + appAtual.getApkName());
+                        }
+
+                        if (!appFile.exists()) {
+                            throw new RuntimeException("❌ APK não encontrado no caminho: " + appFile.getAbsolutePath());
+                        }
+
+                        apkPath = appFile.getAbsolutePath();
+                        System.out.println("📂 Usando caminho ABSOLUTO local do APK: " + apkPath);
                     }
 
-                    // Log para ajudar no debug no Jenkins
-                    System.out.println("📂 Procurando APK em: " + app.getAbsolutePath());
+                    // Define o caminho para o Appium Server.
+                    options.setApp(apkPath);
 
-                    // Validação Final
-                    if (!app.exists()) {
-                        throw new RuntimeException("❌ APK não encontrado no caminho: " + app.getAbsolutePath() +
-                                "\n Verifique se o arquivo .apk foi commitado no Git e se o caminho está correto!");
-                    }
-
-                    options.setApp(app.getAbsolutePath());
-                    options.setAppWaitActivity("*");
-
-                } else {
-                    // Fluxo de App Já Instalado / Nativo
-                    options.setAppPackage(appAtual.getAppPackage());
-                    options.setAppActivity(appAtual.getAppActivity());
+                    // Força o Appium a esperar pela Activity de login
+                    options.setAppWaitActivity(appAtual.getAppActivity());
                 }
 
                 // --- LÓGICA DA URL DO APPIUM ---
-                String appiumUrl = System.getProperty("APPIUM_SERVER_URL");
+                String appiumUrl = System.getProperty("APPIUM_SERVER_URL", "http://127.0.0.1:4723/");
 
-                if (appiumUrl == null || appiumUrl.isEmpty()) {
-                    appiumUrl = "http://127.0.0.1:4723/";
+                if (System.getProperty("APPIUM_SERVER_URL") == null || System.getProperty("APPIUM_SERVER_URL").isEmpty()) {
                     System.out.println("⚠️ Variável APPIUM_SERVER_URL não definida. Usando padrão local: " + appiumUrl);
                 } else {
                     System.out.println("🌐 Usando URL do Appium definida via System Property: " + appiumUrl);
@@ -77,6 +92,9 @@ public class MobileDriverManager {
 
             } catch (MalformedURLException e) {
                 throw new RuntimeException("❌ Erro na URL do Appium", e);
+            } catch (Exception e) {
+                // Captura o erro SessionNotCreatedException e relança com mensagem clara
+                throw new RuntimeException("❓ Erro ao iniciar o driver Appium ou aplicar configurações: " + e.getMessage(), e);
             }
         }
         return driver;
